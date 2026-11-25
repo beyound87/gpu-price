@@ -1,0 +1,56 @@
+name: 每日抓取 GPU 价格
+
+on:
+  schedule:
+    - cron: "17 10 * * *"   # UTC 10:17 = 北京时间 18:17（gpurentalprices 约 UTC 08:47 更新）
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["site/**", "!site/data/**", "scraper/**", "data/manual.json"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: gpu-price
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 抓取并生成数据
+        run: python -m scraper.build
+
+      - name: 提交数据
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data data/snapshots
+          git diff --cached --quiet || git commit -m "chore: 更新 GPU 价格数据 $(date -u +%F)"
+          git pull --rebase
+          git push
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NVIDIA GPU 价格行情 · 租用与购买全网报价</title>
+<meta name="description" content="每日更新的 NVIDIA GPU 云租用价、整卡与整机购买价、国内现货行情：B300、B200、H200、H100、RTX PRO 6000、RTX 5090 等。">
+<meta name="theme-color" content="#0b0f14" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2376b900'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' font-family='Arial' font-weight='700' fill='%230b0f14'%3EG%3C/text%3E%3C/svg%3E">
+<script>
+  // 尽早应用主题，避免闪烁
+  (function () { var t = localStorage.getItem("gp-theme"); if (t) document.documentElement.dataset.theme = t; })();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="appbar">
+  <div class="appbar-in">
+    <div class="logo">G</div>
+    <div class="title">
+      <h1>GPU 价格行情</h1>
+      <div class="meta" id="meta">加载中…</div>
+    </div>
+    <button class="icon-btn" id="theme" aria-label="切换亮暗模式" title="切换亮暗模式"></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="搜索型号或厂商，如 H200、5090、RunPod" autocomplete="off">
+    </div>
+    <div class="controls">
+      <div class="seg" id="view"><button data-v="simple">简约</button><button data-v="full">详细</button></div>
+      <div class="seg" id="cur"><button data-c="usd">美元</button><button data-c="cny">人民币</button></div>
+      <select id="sort" aria-label="排序">
+        <option value="rank">按档次</option>
+        <option value="rent">租价最低</option>
+        <option value="buy">买价最低</option>
+        <option value="count">报价最多</option>
+      </select>
+    </div>
+  </div>
+
+  <nav class="pills" id="tabs">
+    <button data-t="all">全部</button>
+    <button data-t="dc">数据中心</button>
+    <button data-t="ws">工作站</button>
+    <button data-t="gaming">消费级</button>
+    <button data-t="cn">国内特供</button>
+  </nav>
+
+  <section class="hot">
+    <h2>热门型号 <span>按需租用 · 购买，最低 / 最高</span></h2>
+    <div class="ticker" id="ticker"></div>
+  </section>
+
+  <section>
+    <h2 class="list-h" id="list-h">全部型号</h2>
+    <div id="list"></div>
+  </section>
+
+  <footer>
+    <h3>数据源</h3>
+    <div class="sources" id="sources"></div>
+    <div class="notes">
+      <p>租用价统一为<b>每张 GPU 每小时</b>，不含存储、流量与税；整机报价同时给出总价与折合每卡价。"按需"为可随时开通的标准价，"竞价·社区"含 spot、社区云和竞价市场，价格低但可能被回收。</p>
+      <p>购买价为经销商公开标价，含新品、二手与翻新；数据中心卡与整机多为询价，标"估算"的为分析师或媒体报道。国内现货为含税人民币报价。</p>
+      <p>每日自动更新，单个数据源失败时沿用上次数据并标"过期"。主要数据来自 <a href="https://gpurentalprices.com/data" target="_blank" rel="noopener">GPU Rental Prices</a>（CC BY 4.0），另有 Shadeform、Vast.ai、航业算力、宽泛采销。下单前请以厂商页面为准。</p>
+    </div>
+  </footer>
+</main>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="backdrop" data-close></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="grab" data-close></div>
+    <button class="icon-btn close" data-close aria-label="关闭">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
