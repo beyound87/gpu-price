@@ -137,6 +137,7 @@ def summarize(offers, gpu_names):
         cards = [o for o in buy if not o.get("server")]
         servers = [o for o in buy if o.get("server")]
         cny = [o for o in priced if o["type"] == "cn" and not o.get("server")]  # 整机报道价不算单卡最低
+        cn_srv = [o for o in priced if o["type"] == "cn" and o.get("server")]  # 国内整机单独统计
         vram = [o.get("vram") for o in items if o.get("vram")]
         od_min, any_min = _min(od, "usd"), _min(rent, "usd")
         cheap_min = _min([o for o in rent if o.get("kind") in CHEAP], "usd")
@@ -164,7 +165,11 @@ def summarize(offers, gpu_names):
                 "n": len(buy),
             },
             "cn": {"min": cn_min and cn_min["cny"], "min_p": cn_min and cn_min["provider"],
-                   "max": cn_max and cn_max["cny"], "max_p": cn_max and cn_max["provider"], "n": len(cny)},
+                   "max": cn_max and cn_max["cny"], "max_p": cn_max and cn_max["provider"], "n": len(cny) + len(cn_srv),
+                   "srv_min": min((o["cny"] for o in cn_srv), default=None),
+                   "srv_max": max((o.get("cny_hi") or o["cny"] for o in cn_srv), default=None),
+                   "srv_n": cn_srv[0].get("n") if cn_srv else None,
+                   "srv_p": cn_srv[0]["provider"] if cn_srv else None},
         })
     out.sort(key=lambda g: (g["rank"], -(g["rent"]["median"] or 0), g["id"]))
     return out

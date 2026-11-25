@@ -78,7 +78,7 @@
   function buyInfo(g) {
     const b = g.buy, c = g.cn;
     if (b.card_min != null) return { lbl: "购买<small>单卡</small>", lo: usd(b.card_min), loP: b.card_min_p, hi: usd(b.card_max), hiP: b.card_max_p };
-    if (b.srv_per_min != null) return { lbl: `整机<small>${b.srv_n ? b.srv_n + "卡·" : ""}每卡</small>`, lo: usd(b.srv_per_min), loP: b.srv_min_p, hi: usd(b.srv_per_max), hiP: b.srv_max_p };
+    if (b.srv_per_min != null) return { lbl: `海外<small>${b.srv_n ? b.srv_n + "卡机·" : ""}每卡</small>`, lo: usd(b.srv_per_min), loP: b.srv_min_p, hi: usd(b.srv_per_max), hiP: b.srv_max_p };
     if (c.min != null) return { lbl: "国内<small>现货</small>", lo: cny(c.min), loP: c.min_p, hi: cny(c.max), hiP: c.max_p };
     return null;
   }
@@ -100,6 +100,7 @@
         ${line("租用<small>/卡·时</small>", hr(r.od_min), r.od_min_p, hr(r.od_max), r.od_max_p, true)}
         ${b ? line(b.lbl, b.lo, b.loP, b.hi, b.hiP)
             : `<div class="mm"><div class="lbl">购买</div><div class="lo na">暂无</div><div></div></div>`}
+        ${g.cn.srv_min != null ? line(`国内<small>${g.cn.srv_n || 8}卡整机</small>`, cny(g.cn.srv_min), g.cn.srv_p, cny(g.cn.srv_max), "") : ""}
         ${spark(histSeries(id), 160, 26)}
       </div>`;
     }).join("");
@@ -147,13 +148,15 @@
       <div class="stats">
         ${stat("租用起 /卡·时", rent[0], rent[1], true)}
         ${stat("购买起", buy[0], buy[1])}
-        ${stat("国内现货起", cny(g.cn.min), g.cn.min_p)}
+        ${g.cn.srv_min != null
+          ? stat(`国内${g.cn.srv_n || 8}卡整机`, cny(g.cn.srv_min), g.cn.srv_max > g.cn.srv_min ? `至 ${cny(g.cn.srv_max)}` : g.cn.srv_p)
+          : stat("国内现货起", cny(g.cn.min), g.cn.min_p)}
       </div>${extra}</div>`;
   }
   function table(list) {
     const td = (v, s, hi) => `<td>${v != null ? `<span class="pv${hi ? " hi" : ""}">${v}</span>${s ? `<span class="ps">${esc(s)}</span>` : ""}` : na}</td>`;
     return `<div class="tbl-wrap"><table class="main"><thead><tr>
-      <th>型号</th><th>按需租用 最低</th><th>最高</th><th>中位</th><th>竞价·社区</th><th>单卡购买 最低~最高</th><th>整机折合每卡</th><th>国内现货</th><th>90 天走势</th>
+      <th>型号</th><th>按需租用 最低</th><th>最高</th><th>中位</th><th>竞价·社区</th><th>单卡购买 最低~最高</th><th>海外整机折合每卡</th><th>国内现货单卡</th><th>国内整机</th><th>90 天走势</th>
       </tr></thead><tbody>${list.map((g) => {
         const r = g.rent, b = g.buy;
         return `<tr data-id="${esc(g.id)}">
@@ -163,6 +166,7 @@
           ${td(b.card_min != null ? `${usd(b.card_min)}${b.card_max > b.card_min ? " ~ " + usd(b.card_max) : ""}` : null, b.card_min_p)}
           ${td(usd(b.srv_per_min), b.srv_per_min != null ? `${b.srv_n}卡整机 ${usd(b.srv_min)}` : "")}
           ${td(cny(g.cn.min), g.cn.min_p)}
+          ${td(cny(g.cn.srv_min), g.cn.srv_min != null ? `${g.cn.srv_n || 8}卡 · 至 ${cny(g.cn.srv_max)}` : "")}
           <td class="sp">${spark(histSeries(g.id), 110, 26)}</td></tr>`;
       }).join("")}</tbody></table></div>`;
   }
@@ -210,7 +214,7 @@
   function cnItem(o, best, vname) {
     return `<div class="offer${best ? " best" : ""}"><div class="o-top">
       <div class="o-who">${name(o)}${best ? '<span class="best-badge">最低</span>' : ""}
-        <div class="o-tags">${o.server ? tag("8卡整机", "gpu") : ""}${o.kind ? tag(o.kind) : ""}${vname ? tag(vname) : ""}${flags(o)}</div></div>
+        <div class="o-tags">${o.server ? tag(`${o.n || 8}卡整机`, "gpu") : tag("单卡", "gpu")}${o.kind ? tag(o.kind) : ""}${vname ? tag(vname) : ""}${flags(o)}${o.at ? "" : tag("未注明日期", "warn")}</div></div>
       <div class="o-price"><b>${cny(o.cny)}${o.cny_hi ? `<span style="font-weight:500;font-size:13px"> ~ ${cny(o.cny_hi)}</span>` : ""}</b><small>≈ $${Math.round(o.cny / fx()).toLocaleString("en-US")}</small></div>
     </div>${desc(o.cfg)}${foot(o.stock, o.at)}</div>`;
   }
@@ -246,13 +250,17 @@
       box("按需租用 /卡·时", hr(r.od_min), hr(r.od_max), r.median != null ? `中位 ${hr(r.median)} · ${r.providers} 家厂商` : ""),
       box("竞价·社区 /卡·时", hr(r.cheap_min), null, r.cheap_min_p),
       box("单卡购买", usd(b.card_min), usd(b.card_max), b.card_min_p ? `最低 ${b.card_min_p}` : ""),
-      box(b.srv_n ? `${b.srv_n}卡整机 · 折合每卡` : "整机 · 折合每卡", usd(b.srv_per_min), usd(b.srv_per_max), b.srv_min ? `整机总价 ${usd(b.srv_min)} 起` : ""),
-      box("国内现货", cny(c.min), cny(c.max), c.min_p ? `最低 ${c.min_p}` : ""),
+      box(b.srv_n ? `海外 ${b.srv_n}卡整机 · 折合每卡` : "海外整机 · 折合每卡", usd(b.srv_per_min), usd(b.srv_per_max), b.srv_min ? `整机总价 ${usd(b.srv_min)} 起` : ""),
+      box("国内现货 · 单卡", cny(c.min), cny(c.max), c.min_p ? `最低 ${c.min_p}` : ""),
+      box(`国内 ${c.srv_n || 8}卡整机`, cny(c.srv_min), cny(c.srv_max), c.srv_p ? `${c.srv_p} · 约每卡 ${cny(c.srv_min / (c.srv_n || 8))}` : ""),
     ].filter(Boolean);
     if (boxes.length % 2) boxes[boxes.length - 1] = boxes[boxes.length - 1].replace('class="d-box"', 'class="d-box wide"');
     const trend = histSeries(g.id).some((x) => x != null)
       ? `<div class="d-box wide"><div class="k"><span>按需最低价 · 近 90 天</span>${chgHtml(change7(g.id))}</div>${spark(histSeries(g.id), 300, 46)}</div>` : "";
-    const grid = `<div class="d-grid">${boxes.join("")}${trend}</div>`;
+    // 海外经销商价与国内渠道价并存时提示差异原因
+    const gap = b.srv_per_min != null && c.srv_min != null
+      ? `<div class="d-note">海外整机为美国经销商标价（受出口管制，不能合法发往国内）；国内整机为国内渠道报道价，含管制溢价，两者相差数倍属正常。</div>` : "";
+    const grid = `<div class="d-grid">${boxes.join("")}${trend}</div>${gap}`;
     const chips = multi ? `<div class="chips">${[{ id: "all", name: "全部规格" }, ...g.variants].map((x) =>
       `<button class="chip${x.id === v ? " on" : ""}" data-variant="${esc(x.id)}">${esc(x.name)}</button>`).join("")}</div>` : "";
     const labels = { rent: "租用", buy: "购买", cn: "国内现货" };
