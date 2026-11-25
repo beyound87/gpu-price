@@ -115,6 +115,9 @@ h1{font-size:17px;margin:0;line-height:1.25}
 .tag.cheap{background:var(--warn-soft);color:var(--warn)}
 .tag.warn{background:var(--warn-soft);color:var(--warn)}
 .tag.ref{background:var(--info-soft);color:var(--info)}
+.tag.cn{background:#fdecec;color:#c62828}
+:root[data-theme="dark"] .tag.cn{background:#3a1416;color:#ff8a8a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.cn{background:#3a1416;color:#ff8a8a}}
 
 /* ========== 详细表格（桌面） ========== */
 .tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}

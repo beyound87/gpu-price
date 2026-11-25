@@ -195,8 +195,8 @@
     const [kt, kc] = Object.hasOwn(KIND, o.kind) ? KIND[o.kind] : [o.kind || "—", ""];
     return `<div class="offer${best ? " best" : ""}"><div class="o-top">
       <div class="o-who">${name(o)}${best ? '<span class="best-badge">最低</span>' : ""}
-        <div class="o-tags">${tag(kt, kc)}${gpuTag(o.n, false)}${vname ? tag(vname) : ""}${flags(o)}</div></div>
-      <div class="o-price"><b>${hr(o.usd)}</b><small>/卡·时</small>${o.n > 1 ? `<small class="per">${o.n}卡整机 ${hr(o.usd * o.n)}/时</small>` : ""}</div>
+        <div class="o-tags">${o.cn ? tag("国内云", "cn") : ""}${tag(kt, kc)}${gpuTag(o.n, false)}${vname ? tag(vname) : ""}${flags(o)}</div></div>
+      <div class="o-price"><b>${hr(o.usd)}</b><small>/卡·时</small>${o.cny_hr != null && S.cur === "usd" ? `<small class="per">¥${o.cny_hr.toFixed(2)}/卡·时</small>` : ""}${o.n > 1 ? `<small class="per">${o.n}卡整机 ${hr(o.usd * o.n)}/时</small>` : ""}</div>
     </div>${desc(o.cfg)}${foot(o.region, zh(o.stock), o.at)}</div>`;
   }
   function buyItem(o, best, vname) {
@@ -255,7 +255,7 @@
     const grid = `<div class="d-grid">${boxes.join("")}${trend}</div>`;
     const chips = multi ? `<div class="chips">${[{ id: "all", name: "全部规格" }, ...g.variants].map((x) =>
       `<button class="chip${x.id === v ? " on" : ""}" data-variant="${esc(x.id)}">${esc(x.name)}</button>`).join("")}</div>` : "";
-    const labels = { rent: "租用", buy: "购买", cn: "国内" };
+    const labels = { rent: "租用", buy: "购买", cn: "国内现货" };
     const tabs = `<div class="d-tabs"><div class="seg">${Object.keys(labels).map((k) =>
       `<button data-dtab="${k}" class="${k === dt ? "on" : ""}"${lists[k].length ? "" : " disabled"}>${labels[k]} ${lists[k].length}</button>`).join("")}</div></div>`;
 

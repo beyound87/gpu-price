@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import gpus as G
 from .net import get_json
-from .sources import cn, grp, shadeform, vast
+from .sources import cn, cn_cloud, grp, shadeform, vast
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE_DATA = ROOT / "site" / "data"
@@ -37,7 +37,7 @@ def fx_rate(prev):
         return prev.get("fx") or {"usdcny": 7.1, "at": "", "src": "fallback"}
 
 
-def run_sources(prev):
+def run_sources(prev, usdcny):
     prev_offers = prev.get("offers", [])
     status, offers = [], []
     ctx = {"providers": {}, "gpu_names": {}, "history_rows": [], "grp_keys": set()}
@@ -68,6 +68,10 @@ def run_sources(prev):
         ("vast", "Vast.ai", "https://vast.ai/", vast.fetch),
         ("olbaba", "航业算力", "https://ai.olbaba.com/market/gpu.html", cn.fetch_olbaba),
         ("qudao", "宽泛采销", "https://qudao.co/", cn.fetch_qudao),
+        ("suanli", "共绩算力", "https://suanli.cn/product/server/", lambda: cn_cloud.fetch_suanli(usdcny)),
+        ("aliyun", "阿里云", "https://help.aliyun.com/zh/rds/apsaradb-rds-for-mysql/scheduled-scaling-for-rds-custom-ai-nodes", lambda: cn_cloud.fetch_aliyun(usdcny)),
+        ("suanjia", "算家云", "https://suanjiayun.com", lambda: cn_cloud.fetch_suanjia(usdcny)),
+        ("matpool", "矩池云", "https://matpool.com/host-market/gpu", lambda: cn_cloud.fetch_matpool(usdcny)),
     ]
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     for sid, name, url, fn in runners:
@@ -105,7 +109,8 @@ def drop_outliers(offers):
         if o["type"] == "rent":
             by.setdefault(o["g"], []).append(o["usd"])
     med = {g: statistics.median(v) for g, v in by.items() if len(v) >= 4}
-    return [o for o in offers if not (o["type"] == "rent" and o["g"] in med and o["usd"] < med[o["g"]] * 0.25)]
+    # 国内云直接取自官网价格页，结构性低于海外中位，不按此规则剔除
+    return [o for o in offers if not (o["type"] == "rent" and not o.get("cn") and o["g"] in med and o["usd"] < med[o["g"]] * 0.25)]
 
 
 def _min(items, key):
@@ -199,7 +204,7 @@ def main():
     prev = load(LATEST, {})
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     fx = fx_rate(prev)
-    offers, status, ctx = run_sources(prev)
+    offers, status, ctx = run_sources(prev, fx["usdcny"])
 
     offers = [o for o in offers if not G.excluded(o["g"])]
     offers = drop_outliers(offers)
